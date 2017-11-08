@@ -267,6 +267,12 @@ class App(QtWidgets.QWidget):
         return listed_machines
 
 
+def launch():
+    global application
+    application = App()
+    application.show()
+
+
 if __name__ == '__main__':
     import sys
 
