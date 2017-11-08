@@ -67,9 +67,13 @@ def apply_settings(instance, settings):
 
     cmds.setAttr("{}.suspendPublishJob".format(instance),
                  settings["suspendPublishJob"])
-    cmds.setAttr("{}.priority".format(instance), settings["Priority"])
     cmds.setAttr("{}.includeDefaultRenderLayer".format(instance),
                  settings["includeDefaultRenderLayer"])
+
+    cmds.setAttr("{}.startFrame".format(instance), settings["startFrame"])
+    cmds.setAttr("{}.endFrame".format(instance), settings["endFrame"])
+
+    cmds.setAttr("{}.priority".format(instance), settings["priority"])
 
     # Unlock and set value, relock after setting
     machine_list_attr = "{}.machineList".format(instance)
@@ -91,13 +95,16 @@ def read_settings(instance):
     settings = dict()
 
     settings["suspendPublishJob"] = cmds.getAttr("{}.suspendPublishJob".format(instance))
-    settings["Priority"] = cmds.getAttr("{}.priority".format(instance))
+    settings["priority"] = cmds.getAttr("{}.priority".format(instance))
 
     include_def_layer = "{}.includeDefaultRenderLayer".format(instance)
     settings["includeDefaultRenderLayer"] = cmds.getAttr(include_def_layer)
 
     if cmds.getAttr("{}.whitelist".format(instance)):
         settings["Whitelist"] = ""
+
+    settings["startFrame"] = cmds.getAttr("{}.startFrame".format(instance))
+    settings["endFrame"] = cmds.getAttr("{}.endFrame".format(instance))
 
     return settings
 

@@ -1,6 +1,5 @@
 from avalon.vendor.Qt import QtWidgets, QtCore
 
-# from render_layer_options import RenderLayerOptions
 import lib
 import mayalib
 
@@ -30,6 +29,19 @@ class App(QtWidgets.QWidget):
 
         publish = QtWidgets.QCheckBox("Suspend Publish Job")
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
+
+        # region Frame range
+        framerange_grp = QtWidgets.QGroupBox("Start / End Frame")
+        framerange_hlayout = QtWidgets.QHBoxLayout()
+
+        start_frame = QtWidgets.QSpinBox()
+        start_frame.setRange(-1000, 1000)
+        end_frame = QtWidgets.QSpinBox()
+        end_frame.setRange(-1000, 1000)
+
+        framerange_hlayout.addWidget(start_frame)
+        framerange_hlayout.addWidget(end_frame)
+        framerange_grp.setLayout(framerange_hlayout)
 
         # region Priority
         priority_grp = QtWidgets.QGroupBox("Priority")
@@ -94,6 +106,7 @@ class App(QtWidgets.QWidget):
 
         layout.addWidget(defaultlayer)
         layout.addWidget(publish)
+        layout.addWidget(framerange_grp)
         layout.addWidget(priority_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
@@ -102,6 +115,8 @@ class App(QtWidgets.QWidget):
         # Enable access for all methods
         self.publish = publish
         self.defaultlayer = defaultlayer
+        self.start_frame = start_frame
+        self.end_frame = end_frame
         self.priority_value = priority_value
         self.priority_slider = priority_slider
         self.black_list = black_list
@@ -202,18 +217,22 @@ class App(QtWidgets.QWidget):
 
     def _get_settings(self):
 
-        job_info = {}
+        settings = {}
         machine_list_type = self._get_list_type()
 
         machine_limits = self._get_listed_machines()
         machine_limits = " ".join(machine_limits)
 
-        job_info["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
-        job_info["Priority"] = self.priority_value.value()
-        job_info["suspendPublishJob"] = self.publish.isChecked()
-        job_info[machine_list_type] = machine_limits
+        settings["startFrame"] = self.start_frame.value()
+        settings["endFrame"] = self.end_frame.value()
 
-        return job_info
+        settings["priority"] = self.priority_value.value()
+        settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
+        settings["suspendPublishJob"] = self.publish.isChecked()
+
+        settings[machine_list_type] = machine_limits
+
+        return settings
 
     def _apply_settings(self):
 
@@ -225,8 +244,10 @@ class App(QtWidgets.QWidget):
 
         # Apply settings from node
         self.publish.setChecked(settings["suspendPublishJob"])
-        self.priority_slider.setValue(settings["Priority"])
         self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
+        self.start_frame.setValue(settings["startFrame"])
+        self.end_frame.setValue(settings["endFrame"])
+        self.priority_slider.setValue(settings["priority"])
 
         white_list = "Whitelist" in settings
         self.white_list.setChecked(white_list)
