@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../avalon-core/.idea/avalon-core.iml" filepath="$PROJECT_DIR$/../../avalon-core/.idea/avalon-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../colorbleed-config/.idea/colorbleed-config.iml" filepath="$PROJECT_DIR$/../../colorbleed-config/.idea/colorbleed-config.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/deadline_submission_settings.iml" filepath="$PROJECT_DIR$/.idea/deadline_submission_settings.iml" />
+    </modules>
+  </component>
+</project>
