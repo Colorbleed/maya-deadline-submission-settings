@@ -1,6 +1,5 @@
 from avalon.vendor.Qt import QtWidgets, QtCore
 
-# from render_layer_options import RenderLayerOptions
 import lib
 import mayalib
 
