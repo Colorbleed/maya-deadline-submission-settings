@@ -36,6 +36,7 @@ class App(QtWidgets.QWidget):
 
         priority_value = QtWidgets.QSpinBox()
         priority_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        priority_value.setEnabled(False)
         priority_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         priority_slider.setMinimum(0)
         priority_slider.setMaximum(99)
@@ -90,14 +91,12 @@ class App(QtWidgets.QWidget):
 
         # endregion
         accept_btn = QtWidgets.QPushButton("Use Settings")
-        create_node_btn = QtWidgets.QPushButton("Create Render Globals Node")
 
         layout.addWidget(defaultlayer)
         layout.addWidget(publish)
         layout.addWidget(priority_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
-        layout.addWidget(create_node_btn)
         layout.addWidget(accept_btn)
 
         # Enable access for all methods
@@ -111,7 +110,6 @@ class App(QtWidgets.QWidget):
         self.listed_machines = listed_machines
         self.add_machine_btn = add_machine_btn
         self.remove_machine_btn = remove_machine_btn
-        self.create_node = create_node_btn
         self.accept = accept_btn
 
         self.setLayout(layout)
@@ -120,8 +118,6 @@ class App(QtWidgets.QWidget):
         self.priority_slider.valueChanged[int].connect(
             self.priority_value.setValue)
         self.add_machine_btn.clicked.connect(self.add_selected_machines)
-        self.remove_machine_btn.clicked.connect(self.remove_selected_machines)
-        self.create_node.clicked.connect(mayalib.create_renderglobals_node)
         self.accept.clicked.connect(self.parse_settings)
 
         self.priority_slider.setValue(50)
@@ -179,26 +175,26 @@ class App(QtWidgets.QWidget):
 
     def parse_settings(self):
 
-        # Get UI settings as dict
-        job_info = self._get_settings()
-
-        # Get the  node and apply settings
+        # Get the  node, create node if none exists
         instance = mayalib.find_render_instance()
         if not instance:
-            self.renderglobals_message()
-            return
+            instance = mayalib.create_renderglobals_node()
+
+        # Get UI settings as dict
+        job_info = self._get_settings()
 
         mayalib.apply_settings(instance, job_info)
 
     def renderglobals_message(self):
 
-        message = ("Please use the Craetor from the Avalon menu to create"
-                   "a renderglobalsDefault isntance")
+        message = ("Please use the Creator from the Avalon menu to create "
+                   "a renderglobalsDefault isntance or use the button on the "
+                   "bottom of the screen.")
 
         button = QtWidgets.QMessageBox.StandardButton.Ok
 
         QtWidgets.QMessageBox.critical(self,
-                                       "Missing instance",
+                                       "Missing renderglobalsDefault node",
                                        message,
                                        button)
         return
