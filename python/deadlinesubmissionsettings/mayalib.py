@@ -105,8 +105,14 @@ def read_settings(instance):
 
 
 def create_renderglobals_node():
+    """Create renderglobals node for scene"""
+
     log.info("Creating renderglobals node")
+
     asset = avalon.Session["AVALON_ASSET"]
-    avalon.api.create(name="renderglobalsDefault",
-                      asset=asset,
-                      family="colorbleed.renderglobals")
+    name = "renderglobalsDefault"
+    family = "colorbleed.renderglobals"
+
+    avalon.api.create(name=name, asset=asset, family=family)
+
+    return name
