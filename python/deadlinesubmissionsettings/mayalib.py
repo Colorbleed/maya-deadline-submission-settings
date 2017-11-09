@@ -1,6 +1,7 @@
 import logging
 
 import maya.cmds as cmds
+import avalon
 from avalon.maya import lib
 
 log = logging.getLogger("DSS Maya Lib")
@@ -70,9 +71,6 @@ def apply_settings(instance, settings):
     cmds.setAttr("{}.includeDefaultRenderLayer".format(instance),
                  settings["includeDefaultRenderLayer"])
 
-    cmds.setAttr("{}.startFrame".format(instance), settings["startFrame"])
-    cmds.setAttr("{}.endFrame".format(instance), settings["endFrame"])
-
     cmds.setAttr("{}.priority".format(instance), settings["priority"])
 
     # Unlock and set value, relock after setting
@@ -103,8 +101,18 @@ def read_settings(instance):
     if cmds.getAttr("{}.whitelist".format(instance)):
         settings["Whitelist"] = ""
 
-    settings["startFrame"] = cmds.getAttr("{}.startFrame".format(instance))
-    settings["endFrame"] = cmds.getAttr("{}.endFrame".format(instance))
-
     return settings
 
+
+def create_renderglobals_node():
+    """Create renderglobals node for scene"""
+
+    log.info("Creating renderglobals node")
+
+    asset = avalon.Session["AVALON_ASSET"]
+    name = "renderglobalsDefault"
+    family = "colorbleed.renderglobals"
+
+    avalon.api.create(name=name, asset=asset, family=family)
+
+    return name

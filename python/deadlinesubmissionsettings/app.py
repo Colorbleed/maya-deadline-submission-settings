@@ -1,7 +1,7 @@
 from avalon.vendor.Qt import QtWidgets, QtCore
 
-import lib
-import mayalib
+from . import lib
+from . import mayalib
 
 
 class App(QtWidgets.QWidget):
@@ -11,7 +11,7 @@ class App(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
 
         self.setWindowTitle("Deadline Submission setting")
-        self.setFixedSize(250, 480)
+        self.setFixedSize(250, 500)
 
         self.setup_ui()
         self.connections()
@@ -30,25 +30,13 @@ class App(QtWidgets.QWidget):
         publish = QtWidgets.QCheckBox("Suspend Publish Job")
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
 
-        # region Frame range
-        framerange_grp = QtWidgets.QGroupBox("Start / End Frame")
-        framerange_hlayout = QtWidgets.QHBoxLayout()
-
-        start_frame = QtWidgets.QSpinBox()
-        start_frame.setRange(-1000, 1000)
-        end_frame = QtWidgets.QSpinBox()
-        end_frame.setRange(-1000, 1000)
-
-        framerange_hlayout.addWidget(start_frame)
-        framerange_hlayout.addWidget(end_frame)
-        framerange_grp.setLayout(framerange_hlayout)
-
         # region Priority
         priority_grp = QtWidgets.QGroupBox("Priority")
         priority_hlayout = QtWidgets.QHBoxLayout()
 
         priority_value = QtWidgets.QSpinBox()
         priority_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        priority_value.setEnabled(False)
         priority_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         priority_slider.setMinimum(0)
         priority_slider.setMaximum(99)
@@ -106,7 +94,6 @@ class App(QtWidgets.QWidget):
 
         layout.addWidget(defaultlayer)
         layout.addWidget(publish)
-        layout.addWidget(framerange_grp)
         layout.addWidget(priority_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
@@ -115,8 +102,6 @@ class App(QtWidgets.QWidget):
         # Enable access for all methods
         self.publish = publish
         self.defaultlayer = defaultlayer
-        self.start_frame = start_frame
-        self.end_frame = end_frame
         self.priority_value = priority_value
         self.priority_slider = priority_slider
         self.black_list = black_list
@@ -133,7 +118,6 @@ class App(QtWidgets.QWidget):
         self.priority_slider.valueChanged[int].connect(
             self.priority_value.setValue)
         self.add_machine_btn.clicked.connect(self.add_selected_machines)
-        self.remove_machine_btn.clicked.connect(self.remove_selected_machines)
         self.accept.clicked.connect(self.parse_settings)
 
         self.priority_slider.setValue(50)
@@ -191,26 +175,26 @@ class App(QtWidgets.QWidget):
 
     def parse_settings(self):
 
-        # Get UI settings as dict
-        job_info = self._get_settings()
-
-        # Get the  node and apply settings
+        # Get the  node, create node if none exists
         instance = mayalib.find_render_instance()
         if not instance:
-            self.renderglobals_message()
-            return
+            instance = mayalib.create_renderglobals_node()
+
+        # Get UI settings as dict
+        job_info = self._get_settings()
 
         mayalib.apply_settings(instance, job_info)
 
     def renderglobals_message(self):
 
-        message = ("Please use the Craetor from the Avalon menu to create"
-                   "a renderglobalsDefault isntance")
+        message = ("Please use the Creator from the Avalon menu to create "
+                   "a renderglobalsDefault isntance or use the button on the "
+                   "bottom of the screen.")
 
         button = QtWidgets.QMessageBox.StandardButton.Ok
 
         QtWidgets.QMessageBox.critical(self,
-                                       "Missing instance",
+                                       "Missing renderglobalsDefault node",
                                        message,
                                        button)
         return
@@ -222,9 +206,6 @@ class App(QtWidgets.QWidget):
 
         machine_limits = self._get_listed_machines()
         machine_limits = " ".join(machine_limits)
-
-        settings["startFrame"] = self.start_frame.value()
-        settings["endFrame"] = self.end_frame.value()
 
         settings["priority"] = self.priority_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
@@ -245,8 +226,6 @@ class App(QtWidgets.QWidget):
         # Apply settings from node
         self.publish.setChecked(settings["suspendPublishJob"])
         self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
-        self.start_frame.setValue(settings["startFrame"])
-        self.end_frame.setValue(settings["endFrame"])
         self.priority_slider.setValue(settings["priority"])
 
         white_list = "Whitelist" in settings
