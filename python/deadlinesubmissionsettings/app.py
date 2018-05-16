@@ -4,15 +4,11 @@ from . import lib
 from . import mayalib
 
 
-print("AARS")
-
 class App(QtWidgets.QWidget):
     """Main application for alter settings per render job (layer)"""
 
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-
-        print("BANANANA")
 
         self.setWindowTitle("Deadline Submission setting")
         self.setFixedSize(250, 500)
@@ -205,7 +201,7 @@ class App(QtWidgets.QWidget):
         machine_list_type = self._get_list_type()
 
         machine_limits = self._get_listed_machines()
-        machine_limits = ";".join(machine_limits)
+        machine_limits = ",".join(machine_limits)
 
         settings["priority"] = self.priority_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
