@@ -184,8 +184,8 @@ class App(QtWidgets.QWidget):
 
     def renderglobals_message(self):
 
-        message = ("Please use the Craetor from the Avalon menu to create "
-                   "a renderglobalsDefault isntance")
+        message = ("Please use the Creator from the Avalon menu to create "
+                   "a renderglobalsDefault instance")
 
         button = QtWidgets.QMessageBox.StandardButton.Ok
 
