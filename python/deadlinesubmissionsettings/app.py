@@ -134,13 +134,11 @@ class App(QtWidgets.QWidget):
 
         # Get all machines selected from available
         machines = self.machine_list.selectedItems()
-        for machine in machines:
-            # Check if name is already in use
-            machine_name = machine.text()
-            if machine_name in listed_machines:
-                continue
-            # Add to list of machines to use
-            self.listed_machines.addItem(machine_name)
+        machine_names = [m.text() for m in machines if m.text()
+                         not in listed_machines]
+
+        # Add to list of machines to use
+        self.listed_machines.addItems(machine_names)
 
     def remove_selected_machines(self):
         machines = self.listed_machines.selectedItems()
@@ -182,14 +180,12 @@ class App(QtWidgets.QWidget):
 
         # Get UI settings as dict
         job_info = self._get_settings()
-
         mayalib.apply_settings(instance, job_info)
 
     def renderglobals_message(self):
 
-        message = ("Please use the Creator from the Avalon menu to create "
-                   "a renderglobalsDefault isntance or use the button on the "
-                   "bottom of the screen.")
+        message = ("Please use the Craetor from the Avalon menu to create "
+                   "a renderglobalsDefault isntance")
 
         button = QtWidgets.QMessageBox.StandardButton.Ok
 
@@ -205,7 +201,7 @@ class App(QtWidgets.QWidget):
         machine_list_type = self._get_list_type()
 
         machine_limits = self._get_listed_machines()
-        machine_limits = " ".join(machine_limits)
+        machine_limits = ",".join(machine_limits)
 
         settings["priority"] = self.priority_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
