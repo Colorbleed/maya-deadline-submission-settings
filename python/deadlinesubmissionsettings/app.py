@@ -28,6 +28,7 @@ class App(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
 
         publish = QtWidgets.QCheckBox("Suspend Publish Job")
+        extend_frames = QtWidgets.QCheckBox("Extend Frames")
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
 
         # region Priority
@@ -101,6 +102,7 @@ class App(QtWidgets.QWidget):
 
         # Enable access for all methods
         self.publish = publish
+        self.extend_frames = extend_frames
         self.defaultlayer = defaultlayer
         self.priority_value = priority_value
         self.priority_slider = priority_slider
@@ -206,6 +208,7 @@ class App(QtWidgets.QWidget):
         settings["priority"] = self.priority_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
         settings["suspendPublishJob"] = self.publish.isChecked()
+        settings["extendFrames"] = self.extend_frames
 
         settings[machine_list_type] = machine_limits
 
