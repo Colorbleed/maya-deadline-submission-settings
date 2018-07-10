@@ -94,7 +94,10 @@ def read_settings(instance):
 
     settings = dict()
 
-    settings["suspendPublishJob"] = cmds.getAttr("{}.suspendPublishJob".format(instance))
+    suspend_attr = "{}.suspendPublishJob".format(instance)
+    extend_attr = "{}.extendFrames".format(instance)
+    settings["suspendPublishJob"] = cmds.getAttr(suspend_attr)
+    settings["extendFrames"] = extend_attr
     settings["priority"] = cmds.getAttr("{}.priority".format(instance))
 
     include_def_layer = "{}.includeDefaultRenderLayer".format(instance)
