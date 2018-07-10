@@ -71,6 +71,8 @@ def apply_settings(instance, settings):
     cmds.setAttr("{}.includeDefaultRenderLayer".format(instance),
                  settings["includeDefaultRenderLayer"])
 
+    cmds.setAttr("{}.extendFrames".format(instance), settings["extendFrames"])
+
     cmds.setAttr("{}.priority".format(instance), settings["priority"])
 
     # Unlock and set value, relock after setting
@@ -102,17 +104,3 @@ def read_settings(instance):
         settings["Whitelist"] = ""
 
     return settings
-
-
-def create_renderglobals_node():
-    """Create renderglobals node for scene"""
-
-    log.info("Creating renderglobals node")
-
-    asset = avalon.Session["AVALON_ASSET"]
-    name = "renderglobalsDefault"
-    family = "colorbleed.renderglobals"
-
-    avalon.api.create(name=name, asset=asset, family=family)
-
-    return name
