@@ -29,6 +29,8 @@ class App(QtWidgets.QWidget):
 
         publish = QtWidgets.QCheckBox("Suspend Publish Job")
         extend_frames = QtWidgets.QCheckBox("Extend Frames")
+        override_frames = QtWidgets.QCheckBox("Override Frames")
+        override_frames.setEnabled(False)
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
 
         # region Priority
@@ -95,6 +97,8 @@ class App(QtWidgets.QWidget):
 
         layout.addWidget(defaultlayer)
         layout.addWidget(publish)
+        layout.addWidget(extend_frames)
+        layout.addWidget(override_frames)
         layout.addWidget(priority_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
@@ -103,6 +107,7 @@ class App(QtWidgets.QWidget):
         # Enable access for all methods
         self.publish = publish
         self.extend_frames = extend_frames
+        self.override_frames = override_frames
         self.defaultlayer = defaultlayer
         self.priority_value = priority_value
         self.priority_slider = priority_slider
@@ -120,13 +125,14 @@ class App(QtWidgets.QWidget):
         self.priority_slider.valueChanged[int].connect(
             self.priority_value.setValue)
         self.add_machine_btn.clicked.connect(self.add_selected_machines)
+        self.remove_machine_btn.clicked.connect(self.remove_selected_machines)
         self.accept.clicked.connect(self.parse_settings)
+        self.extend_frames.toggled.connect(self._toggle_override_enabled)
 
         self.priority_slider.setValue(50)
 
-    def add_per_job_settings(self):
-        """Create a mini settings for each render layer which is discovered"""
-        pass
+    def _toggle_override_enabled(self):
+        self.override_frames.setEnabled(self.extend_frames.isChecked())
 
     def add_selected_machines(self):
         """Add selected machines to the list which is going to be used"""
@@ -208,7 +214,14 @@ class App(QtWidgets.QWidget):
         settings["priority"] = self.priority_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
         settings["suspendPublishJob"] = self.publish.isChecked()
-        settings["extendFrames"] = self.extend_frames
+
+        override = False
+        extend_frames = self.extend_frames.isChecked()
+        if extend_frames:
+            override = self.override_frames.isChecked()
+
+        settings["extendFrames"] = extend_frames
+        settings["overrideExistingFrame"] = override
 
         settings[machine_list_type] = machine_limits
 

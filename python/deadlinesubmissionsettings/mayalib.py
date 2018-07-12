@@ -72,6 +72,8 @@ def apply_settings(instance, settings):
                  settings["includeDefaultRenderLayer"])
 
     cmds.setAttr("{}.extendFrames".format(instance), settings["extendFrames"])
+    cmds.setAttr("{}.overrideExistingFrame".format(instance),
+                 settings["overrideExistingFrame"])
 
     cmds.setAttr("{}.priority".format(instance), settings["priority"])
 
@@ -96,9 +98,12 @@ def read_settings(instance):
 
     suspend_attr = "{}.suspendPublishJob".format(instance)
     extend_attr = "{}.extendFrames".format(instance)
+    override_frame_attr = "{}.overrideExistingFrame".format(instance)
+
     settings["suspendPublishJob"] = cmds.getAttr(suspend_attr)
-    settings["extendFrames"] = extend_attr
     settings["priority"] = cmds.getAttr("{}.priority".format(instance))
+    settings["extendFrames"] = cmds.getAttr(extend_attr)
+    settings["overrideExistingFrame"] = cmds.getAttr(override_frame_attr)
 
     include_def_layer = "{}.includeDefaultRenderLayer".format(instance)
     settings["includeDefaultRenderLayer"] = cmds.getAttr(include_def_layer)
@@ -107,3 +112,17 @@ def read_settings(instance):
         settings["Whitelist"] = ""
 
     return settings
+
+
+def create_renderglobals_node():
+    """Create renderglobals node for scene"""
+
+    log.info("Creating renderglobals node")
+
+    asset = avalon.Session["AVALON_ASSET"]
+    name = "renderglobalsDefault"
+    family = "colorbleed.renderglobals"
+
+    avalon.api.create(name=name, asset=asset, family=family)
+
+    return name
