@@ -16,6 +16,7 @@ class App(QtWidgets.QWidget):
         self.setup_ui()
         self.connections()
         self.create_machine_limit_options()
+        self.create_pools_options()
 
         # Apply any settings based off the renderglobalsDefault instance
         self._apply_settings()
@@ -53,15 +54,20 @@ class App(QtWidgets.QWidget):
         pools_grp = QtWidgets.QGroupBox("Pools")
         pools_vlayout = QtWidgets.QVBoxLayout()
 
-        pools_example = QtWidgets.QLabel("Example: redshift;yeti")
-        pools_value = QtWidgets.QLineEdit()
-        pools_value.setPlaceholderText("Enter names of pools here ..")
-        pools_value.setToolTip(
-            """Pools help deadline assign jobs to the right machine.
-A maximum of two (2) pools can be assigned per job.""")
+        primary_hlayout = QtWidgets.QHBoxLayout()
+        primary_label = QtWidgets.QLabel("Primary")
+        primary_pool = QtWidgets.QComboBox()
+        primary_hlayout.addWidget(primary_label)
+        primary_hlayout.addWidget(primary_pool)
 
-        pools_vlayout.addWidget(pools_example)
-        pools_vlayout.addWidget(pools_value)
+        secondary_hlayout = QtWidgets.QHBoxLayout()
+        secondary_label = QtWidgets.QLabel("Secondary")
+        secondary_pool = QtWidgets.QComboBox()
+        secondary_hlayout.addWidget(secondary_label)
+        secondary_hlayout.addWidget(secondary_pool)
+
+        pools_vlayout.addLayout(primary_hlayout)
+        pools_vlayout.addLayout(secondary_hlayout)
 
         pools_grp.setLayout(pools_vlayout)
         # endregion pools
@@ -127,12 +133,16 @@ A maximum of two (2) pools can be assigned per job.""")
         self.extend_frames = extend_frames
         self.override_frames = override_frames
         self.defaultlayer = defaultlayer
+
         self.priority_value = priority_value
         self.priority_slider = priority_slider
-        self.pools = pools_value
+        self.primary_pool = primary_pool
+        self.secondary_pool = secondary_pool
+
         self.black_list = black_list
         self.white_list = white_list
         self.machine_list = machine_list
+
         self.listed_machines = listed_machines
         self.add_machine_btn = add_machine_btn
         self.remove_machine_btn = remove_machine_btn
@@ -181,7 +191,8 @@ A maximum of two (2) pools can be assigned per job.""")
     def create_pools_options(self):
         pools = lib.get_pool_list()
         for pool in pools:
-            self.pools.addItem(pool)
+            self.primary_pool.addItem(pool)
+            self.secondary_pool.addItem(pool)
 
     def create_groups_options(self):
         groups = lib.get_group_list()
@@ -190,7 +201,8 @@ A maximum of two (2) pools can be assigned per job.""")
 
     def refresh(self):
 
-        self.pools.clear()
+        self.primary_pool.clear()
+        self.secondary_pool.clear()
         self.groups.clear()
         self.machine_list.clear()
 
@@ -244,18 +256,10 @@ A maximum of two (2) pools can be assigned per job.""")
 
         settings[machine_list_type] = machine_limits
 
-        # Get and validate pools
-        pools_text = self.pools.text()
-        if pools_text != "":
-            pools = [p for p in pools_text.split(";") if p != ""]
-            existing_pools = lib.get_pool_list()
-
-            invalid = [pool for pool in pools if pool not in existing_pools]
-            if invalid:
-                raise ValueError("Pool(s) given is not used by Deadline: '%s'"
-                                 % invalid)
-
-            settings["pools"] = ";".join(pools)
+        # Get pools
+        primary_pool = self.primary_pool.currentText()
+        secondary_pool = self.secondary_pool.currentText()
+        settings["pools"] = ";".join([primary_pool, secondary_pool])
 
         return settings
 
@@ -271,7 +275,26 @@ A maximum of two (2) pools can be assigned per job.""")
         self.publish.setChecked(settings["suspendPublishJob"])
         self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
         self.priority_slider.setValue(settings["priority"])
-        self.pools.setText(settings["pools"])
+
+        pools = [i for i in settings["pools"].split(";") if i != ""]
+        if not pools:
+            pools = ["none", "none"]
+        elif len(pools) == 1:
+            pools.append("none")
+
+        primary_pool, secondary_pool = pools
+
+        for idx in range(self.primary_pool.count()):
+            text = self.primary_pool.itemText(idx)
+            if text == primary_pool:
+                self.primary_pool.setCurrentIndex(idx)
+                break
+
+        for idx in range(self.secondary_pool.count()):
+            text = self.secondary_pool.itemText(idx)
+            if text == secondary_pool:
+                self.secondary_pool.setCurrentIndex(idx)
+                break
 
         white_list = "Whitelist" in settings
         self.white_list.setChecked(white_list)
