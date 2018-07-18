@@ -49,6 +49,23 @@ class App(QtWidgets.QWidget):
         priority_grp.setLayout(priority_hlayout)
         # endregion Priority
 
+        # region pools
+        pools_grp = QtWidgets.QGroupBox("Pools")
+        pools_vlayout = QtWidgets.QVBoxLayout()
+
+        pools_example = QtWidgets.QLabel("Example: redshift;yeti")
+        pools_value = QtWidgets.QLineEdit()
+        pools_value.setPlaceholderText("Enter names of pools here ..")
+        pools_value.setToolTip(
+            """Pools help deadline assign jobs to the right machine.
+A maximum of two (2) pools can be assigned per job.""")
+
+        pools_vlayout.addWidget(pools_example)
+        pools_vlayout.addWidget(pools_value)
+
+        pools_grp.setLayout(pools_vlayout)
+        # endregion pools
+
         # Group box for type of machine list
         list_type_grp = QtWidgets.QGroupBox("Machine List Type")
         list_type_hlayout = QtWidgets.QHBoxLayout()
@@ -100,6 +117,7 @@ class App(QtWidgets.QWidget):
         layout.addWidget(extend_frames)
         layout.addWidget(override_frames)
         layout.addWidget(priority_grp)
+        layout.addWidget(pools_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
         layout.addWidget(accept_btn)
@@ -111,6 +129,7 @@ class App(QtWidgets.QWidget):
         self.defaultlayer = defaultlayer
         self.priority_value = priority_value
         self.priority_slider = priority_slider
+        self.pools = pools_value
         self.black_list = black_list
         self.white_list = white_list
         self.machine_list = machine_list
@@ -225,6 +244,19 @@ class App(QtWidgets.QWidget):
 
         settings[machine_list_type] = machine_limits
 
+        # Get and validate pools
+        pools_text = self.pools.text()
+        if pools_text != "":
+            pools = [p for p in pools_text.split(";") if p != ""]
+            existing_pools = lib.get_pool_list()
+
+            invalid = [pool for pool in pools if pool not in existing_pools]
+            if invalid:
+                raise ValueError("Pool(s) given is not used by Deadline: '%s'"
+                                 % invalid)
+
+            settings["pools"] = ";".join(pools)
+
         return settings
 
     def _apply_settings(self):
@@ -239,6 +271,7 @@ class App(QtWidgets.QWidget):
         self.publish.setChecked(settings["suspendPublishJob"])
         self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
         self.priority_slider.setValue(settings["priority"])
+        self.pools.setText(settings["pools"])
 
         white_list = "Whitelist" in settings
         self.white_list.setChecked(white_list)

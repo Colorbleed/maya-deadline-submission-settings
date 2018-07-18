@@ -71,6 +71,9 @@ def apply_settings(instance, settings):
     cmds.setAttr("{}.includeDefaultRenderLayer".format(instance),
                  settings["includeDefaultRenderLayer"])
 
+    cmds.setAttr("{}.pools".format(instance), settings.get("pools", ""),
+                 type="string")
+
     cmds.setAttr("{}.extendFrames".format(instance), settings["extendFrames"])
     cmds.setAttr("{}.overrideExistingFrame".format(instance),
                  settings["overrideExistingFrame"])
@@ -102,6 +105,7 @@ def read_settings(instance):
 
     settings["suspendPublishJob"] = cmds.getAttr(suspend_attr)
     settings["priority"] = cmds.getAttr("{}.priority".format(instance))
+    settings["pools"] = cmds.getAttr("{}.pools".format(instance))
     settings["extendFrames"] = cmds.getAttr(extend_attr)
     settings["overrideExistingFrame"] = cmds.getAttr(override_frame_attr)
 
