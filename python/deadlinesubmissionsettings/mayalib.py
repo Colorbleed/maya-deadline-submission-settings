@@ -64,7 +64,7 @@ def apply_settings(instance, settings):
 
     """
 
-    ignore = ["id", "family", "machineList"]
+    ignore = ["cbId", "id", "family", "machineList", "useLegacyRenderLayers"]
     user_defined = cmds.listAttr(instance, userDefined=True)
     attributes = [a for a in user_defined if a not in ignore]
 
@@ -74,11 +74,14 @@ def apply_settings(instance, settings):
             value = "Whitelist" in settings
         elif attr not in settings:
             log.error("Attribute '%s' missing in 'renderglobalDefault'! "
-                      "Please re-create the instance")
+                      "Please re-create the instance" % attr)
         else:
             value = settings.get(attr, False)
 
-        cmds.setAttr(attribute, value)
+        if isinstance(value, basestring):
+            cmds.setAttr(attribute, value, type="string")
+        else:
+            cmds.setAttr(attribute, value)
 
     machine_list = settings.get("Whitelist", settings.get("Blacklist"))
 
