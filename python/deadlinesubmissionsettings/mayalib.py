@@ -63,22 +63,24 @@ def apply_settings(instance, settings):
         settings(dict): values from the
 
     """
+
+    ignore = ["id", "family", "machineList"]
+    user_defined = cmds.listAttr(instance, userDefined=True)
+    attributes = [a for a in user_defined if a not in ignore]
+
+    for attr in attributes:
+        attribute = "{}.{}".format(instance, attr)
+        if attr == "whitelist":
+            value = "Whitelist" in settings
+        elif attr not in settings:
+            log.error("Attribute '%s' missing in 'renderglobalDefault'! "
+                      "Please re-create the instance")
+        else:
+            value = settings.get(attr, False)
+
+        cmds.setAttr(attribute, value)
+
     machine_list = settings.get("Whitelist", settings.get("Blacklist"))
-    cmds.setAttr("{}.whitelist".format(instance), "Whitelist" in settings)
-
-    cmds.setAttr("{}.suspendPublishJob".format(instance),
-                 settings["suspendPublishJob"])
-    cmds.setAttr("{}.includeDefaultRenderLayer".format(instance),
-                 settings["includeDefaultRenderLayer"])
-
-    cmds.setAttr("{}.pools".format(instance), settings.get("pools", ""),
-                 type="string")
-
-    cmds.setAttr("{}.extendFrames".format(instance), settings["extendFrames"])
-    cmds.setAttr("{}.overrideExistingFrame".format(instance),
-                 settings["overrideExistingFrame"])
-
-    cmds.setAttr("{}.priority".format(instance), settings["priority"])
 
     # Unlock and set value, relock after setting
     machine_list_attr = "{}.machineList".format(instance)
@@ -99,21 +101,16 @@ def read_settings(instance):
 
     settings = dict()
 
-    suspend_attr = "{}.suspendPublishJob".format(instance)
-    extend_attr = "{}.extendFrames".format(instance)
-    override_frame_attr = "{}.overrideExistingFrame".format(instance)
+    # Get attributes of instance
+    ignore = ["family", "id"]
+    user_defined = cmds.listAttr(instance, userDefined=True)
+    attributes = [attr for attr in user_defined if attr not in ignore]
 
-    settings["suspendPublishJob"] = cmds.getAttr(suspend_attr)
-    settings["priority"] = cmds.getAttr("{}.priority".format(instance))
-    settings["pools"] = cmds.getAttr("{}.pools".format(instance))
-    settings["extendFrames"] = cmds.getAttr(extend_attr)
-    settings["overrideExistingFrame"] = cmds.getAttr(override_frame_attr)
-
-    include_def_layer = "{}.includeDefaultRenderLayer".format(instance)
-    settings["includeDefaultRenderLayer"] = cmds.getAttr(include_def_layer)
-
-    if cmds.getAttr("{}.whitelist".format(instance)):
-        settings["Whitelist"] = ""
+    for attr in attributes:
+        atrribute = "{}.{}".format(instance, attr)
+        if attr == "whitelist":
+            attr = attr.title()
+        settings[attr] = cmds.getAttr(atrribute)
 
     return settings
 
