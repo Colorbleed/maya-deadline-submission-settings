@@ -7,15 +7,18 @@ from . import mayalib
 class App(QtWidgets.QWidget):
     """Main application for alter settings per render job (layer)"""
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
 
+        self.setObjectName("deadlineSubmissionSettings")
         self.setWindowTitle("Deadline Submission setting")
+        self.setWindowFlags(QtCore.Qt.Window)
         self.setFixedSize(250, 500)
 
         self.setup_ui()
         self.connections()
         self.create_machine_limit_options()
+        self.create_pools_options()
 
         # Apply any settings based off the renderglobalsDefault instance
         self._apply_settings()
@@ -28,6 +31,9 @@ class App(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
 
         publish = QtWidgets.QCheckBox("Suspend Publish Job")
+        extend_frames = QtWidgets.QCheckBox("Extend Frames")
+        override_frames = QtWidgets.QCheckBox("Override Frames")
+        override_frames.setEnabled(False)
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
 
         # region Priority
@@ -45,6 +51,28 @@ class App(QtWidgets.QWidget):
         priority_hlayout.addWidget(priority_slider)
         priority_grp.setLayout(priority_hlayout)
         # endregion Priority
+
+        # region pools
+        pools_grp = QtWidgets.QGroupBox("Pools")
+        pools_vlayout = QtWidgets.QVBoxLayout()
+
+        primary_hlayout = QtWidgets.QHBoxLayout()
+        primary_label = QtWidgets.QLabel("Primary")
+        primary_pool = QtWidgets.QComboBox()
+        primary_hlayout.addWidget(primary_label)
+        primary_hlayout.addWidget(primary_pool)
+
+        secondary_hlayout = QtWidgets.QHBoxLayout()
+        secondary_label = QtWidgets.QLabel("Secondary")
+        secondary_pool = QtWidgets.QComboBox()
+        secondary_hlayout.addWidget(secondary_label)
+        secondary_hlayout.addWidget(secondary_pool)
+
+        pools_vlayout.addLayout(primary_hlayout)
+        pools_vlayout.addLayout(secondary_hlayout)
+
+        pools_grp.setLayout(pools_vlayout)
+        # endregion pools
 
         # Group box for type of machine list
         list_type_grp = QtWidgets.QGroupBox("Machine List Type")
@@ -94,19 +122,29 @@ class App(QtWidgets.QWidget):
 
         layout.addWidget(defaultlayer)
         layout.addWidget(publish)
+        layout.addWidget(extend_frames)
+        layout.addWidget(override_frames)
         layout.addWidget(priority_grp)
+        layout.addWidget(pools_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
         layout.addWidget(accept_btn)
 
         # Enable access for all methods
         self.publish = publish
+        self.extend_frames = extend_frames
+        self.override_frames = override_frames
         self.defaultlayer = defaultlayer
+
         self.priority_value = priority_value
         self.priority_slider = priority_slider
+        self.primary_pool = primary_pool
+        self.secondary_pool = secondary_pool
+
         self.black_list = black_list
         self.white_list = white_list
         self.machine_list = machine_list
+
         self.listed_machines = listed_machines
         self.add_machine_btn = add_machine_btn
         self.remove_machine_btn = remove_machine_btn
@@ -118,13 +156,14 @@ class App(QtWidgets.QWidget):
         self.priority_slider.valueChanged[int].connect(
             self.priority_value.setValue)
         self.add_machine_btn.clicked.connect(self.add_selected_machines)
+        self.remove_machine_btn.clicked.connect(self.remove_selected_machines)
         self.accept.clicked.connect(self.parse_settings)
+        self.extend_frames.toggled.connect(self._toggle_override_enabled)
 
         self.priority_slider.setValue(50)
 
-    def add_per_job_settings(self):
-        """Create a mini settings for each render layer which is discovered"""
-        pass
+    def _toggle_override_enabled(self):
+        self.override_frames.setEnabled(self.extend_frames.isChecked())
 
     def add_selected_machines(self):
         """Add selected machines to the list which is going to be used"""
@@ -154,7 +193,8 @@ class App(QtWidgets.QWidget):
     def create_pools_options(self):
         pools = lib.get_pool_list()
         for pool in pools:
-            self.pools.addItem(pool)
+            self.primary_pool.addItem(pool)
+            self.secondary_pool.addItem(pool)
 
     def create_groups_options(self):
         groups = lib.get_group_list()
@@ -163,7 +203,8 @@ class App(QtWidgets.QWidget):
 
     def refresh(self):
 
-        self.pools.clear()
+        self.primary_pool.clear()
+        self.secondary_pool.clear()
         self.groups.clear()
         self.machine_list.clear()
 
@@ -207,7 +248,20 @@ class App(QtWidgets.QWidget):
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
         settings["suspendPublishJob"] = self.publish.isChecked()
 
+        override = False
+        extend_frames = self.extend_frames.isChecked()
+        if extend_frames:
+            override = self.override_frames.isChecked()
+
+        settings["extendFrames"] = extend_frames
+        settings["overrideExistingFrame"] = override
+
         settings[machine_list_type] = machine_limits
+
+        # Get pools
+        primary_pool = self.primary_pool.currentText()
+        secondary_pool = self.secondary_pool.currentText()
+        settings["pools"] = ";".join([primary_pool, secondary_pool])
 
         return settings
 
@@ -220,11 +274,38 @@ class App(QtWidgets.QWidget):
         settings = mayalib.read_settings(instance)
 
         # Apply settings from node
-        self.publish.setChecked(settings["suspendPublishJob"])
-        self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
-        self.priority_slider.setValue(settings["priority"])
+        self.publish.setChecked(settings.get("suspendPublishJob", False))
 
-        white_list = "Whitelist" in settings
+        include_def_layer = settings.get("includeDefaultRenderLayer", False)
+        self.defaultlayer.setChecked(include_def_layer)
+
+        self.priority_slider.setValue(settings.get("priority", 50))
+        self.extend_frames.setChecked(settings.get("extendFrames", False))
+
+        override_frames = settings.get("overrideExistingFrame", False)
+        self.override_frames.setChecked(override_frames)
+
+        pools = [i for i in settings.get("pools", "").split(";") if i != ""]
+        if not pools:
+            pools = ["none", "none"]
+        elif len(pools) == 1:
+            pools.append("none")
+
+        primary_pool, secondary_pool = pools
+
+        for idx in range(self.primary_pool.count()):
+            text = self.primary_pool.itemText(idx)
+            if text == primary_pool:
+                self.primary_pool.setCurrentIndex(idx)
+                break
+
+        for idx in range(self.secondary_pool.count()):
+            text = self.secondary_pool.itemText(idx)
+            if text == secondary_pool:
+                self.secondary_pool.setCurrentIndex(idx)
+                break
+
+        white_list = settings.get("Whitelist", False)
         self.white_list.setChecked(white_list)
         self.black_list.setChecked(not white_list)
 
@@ -244,7 +325,12 @@ class App(QtWidgets.QWidget):
 
 def launch():
     global application
-    application = App()
+
+    toplevel_widgets = QtWidgets.QApplication.topLevelWidgets()
+    mainwindow = next(widget for widget in toplevel_widgets if
+                      widget.objectName() == "MayaWindow")
+
+    application = App(parent=mainwindow)
     application.show()
 
 
