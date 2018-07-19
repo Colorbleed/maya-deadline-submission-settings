@@ -7,10 +7,12 @@ from . import mayalib
 class App(QtWidgets.QWidget):
     """Main application for alter settings per render job (layer)"""
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
 
+        self.setObjectName("deadlineSubmissionSettings")
         self.setWindowTitle("Deadline Submission setting")
+        self.setWindowFlags(QtCore.Qt.Window)
         self.setFixedSize(250, 500)
 
         self.setup_ui()
@@ -272,11 +274,18 @@ class App(QtWidgets.QWidget):
         settings = mayalib.read_settings(instance)
 
         # Apply settings from node
-        self.publish.setChecked(settings["suspendPublishJob"])
-        self.defaultlayer.setChecked(settings["includeDefaultRenderLayer"])
-        self.priority_slider.setValue(settings["priority"])
+        self.publish.setChecked(settings.get("suspendPublishJob", False))
 
-        pools = [i for i in settings["pools"].split(";") if i != ""]
+        include_def_layer = settings.get("includeDefaultRenderLayer", False)
+        self.defaultlayer.setChecked(include_def_layer)
+
+        self.priority_slider.setValue(settings.get("priority", 50))
+        self.extend_frames.setChecked(settings.get("extendFrames", False))
+
+        override_frames = settings.get("overrideExistingFrame", False)
+        self.override_frames.setChecked(override_frames)
+
+        pools = [i for i in settings.get("pools", "").split(";") if i != ""]
         if not pools:
             pools = ["none", "none"]
         elif len(pools) == 1:
@@ -296,7 +305,7 @@ class App(QtWidgets.QWidget):
                 self.secondary_pool.setCurrentIndex(idx)
                 break
 
-        white_list = "Whitelist" in settings
+        white_list = settings.get("Whitelist", False)
         self.white_list.setChecked(white_list)
         self.black_list.setChecked(not white_list)
 
@@ -316,7 +325,12 @@ class App(QtWidgets.QWidget):
 
 def launch():
     global application
-    application = App()
+
+    toplevel_widgets = QtWidgets.QApplication.topLevelWidgets()
+    mainwindow = next(widget for widget in toplevel_widgets if
+                      widget.objectName() == "MayaWindow")
+
+    application = App(parent=mainwindow)
     application.show()
 
 
