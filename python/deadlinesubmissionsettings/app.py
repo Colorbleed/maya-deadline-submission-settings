@@ -193,8 +193,11 @@ class App(QtWidgets.QWidget):
     def create_pools_options(self):
         pools = ["-"]
         pools.extend(lib.get_pool_list())
-        for pool in pools:
+
+        for pool in pools[1:]:
             self.primary_pool.addItem(pool)
+
+        for pool in pools:
             self.secondary_pool.addItem(pool)
 
     def create_groups_options(self):
