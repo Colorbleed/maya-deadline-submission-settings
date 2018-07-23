@@ -191,9 +191,13 @@ class App(QtWidgets.QWidget):
             self.machine_list.addItem(name)
 
     def create_pools_options(self):
-        pools = lib.get_pool_list()
-        for pool in pools:
+        pools = ["-"]
+        pools.extend(lib.get_pool_list())
+
+        for pool in pools[1:]:
             self.primary_pool.addItem(pool)
+
+        for pool in pools:
             self.secondary_pool.addItem(pool)
 
     def create_groups_options(self):
@@ -287,9 +291,9 @@ class App(QtWidgets.QWidget):
 
         pools = [i for i in settings.get("pools", "").split(";") if i != ""]
         if not pools:
-            pools = ["none", "none"]
+            pools = ["none", "-"]
         elif len(pools) == 1:
-            pools.append("none")
+            pools.append("-")
 
         primary_pool, secondary_pool = pools
 
