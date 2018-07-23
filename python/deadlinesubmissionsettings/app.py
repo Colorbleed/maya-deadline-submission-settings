@@ -191,7 +191,11 @@ class App(QtWidgets.QWidget):
             self.machine_list.addItem(name)
 
     def create_pools_options(self):
-        pools = ["-"]
+
+        # Please read the documentation of Thinkbox Deadline on pools
+        # https://deadline.thinkboxsoftware.com/demystifying-pools-groups-and-limits/
+
+        pools = [""]
         pools.extend(lib.get_pool_list())
 
         for pool in pools[1:]:
@@ -265,6 +269,7 @@ class App(QtWidgets.QWidget):
         # Get pools
         primary_pool = self.primary_pool.currentText()
         secondary_pool = self.secondary_pool.currentText()
+
         settings["pools"] = ";".join([primary_pool, secondary_pool])
 
         return settings
@@ -291,9 +296,9 @@ class App(QtWidgets.QWidget):
 
         pools = [i for i in settings.get("pools", "").split(";") if i != ""]
         if not pools:
-            pools = ["none", "-"]
+            pools = ["none", ""]  # default
         elif len(pools) == 1:
-            pools.append("-")
+            pools.append("")
 
         primary_pool, secondary_pool = pools
 
