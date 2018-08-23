@@ -35,6 +35,13 @@ class App(QtWidgets.QWidget):
         override_frames = QtWidgets.QCheckBox("Override Frames")
         override_frames.setEnabled(False)
         defaultlayer = QtWidgets.QCheckBox("Include Default Render Layer")
+        maya_batch_checkbox = QtWidgets.QCheckBox("Use MayaBatch")
+        maya_batch_checkbox.setChecked(True)
+        maya_batch_checkbox.setToolTip(
+            'This uses the MayaBatch plugin. It keeps the scenes loaded '
+            'between frames, which reduces the overhead of rendering the '
+            'job.\nIt is however easier to debug a render when turning this '
+            'off and render using MayaCmd')
 
         # region Priority
         priority_grp = QtWidgets.QGroupBox("Priority")
@@ -124,10 +131,12 @@ class App(QtWidgets.QWidget):
         layout.addWidget(publish)
         layout.addWidget(extend_frames)
         layout.addWidget(override_frames)
+        layout.addWidget(maya_batch_checkbox)
         layout.addWidget(priority_grp)
         layout.addWidget(pools_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
+        #layout.addLayout(render_grp)
         layout.addWidget(accept_btn)
 
         # Enable access for all methods
@@ -148,6 +157,8 @@ class App(QtWidgets.QWidget):
         self.listed_machines = listed_machines
         self.add_machine_btn = add_machine_btn
         self.remove_machine_btn = remove_machine_btn
+
+        self.use_maya_batch = maya_batch_checkbox
         self.accept = accept_btn
 
         self.setLayout(layout)
@@ -272,6 +283,8 @@ class App(QtWidgets.QWidget):
 
         settings["pools"] = ";".join([primary_pool, secondary_pool])
 
+        settings["useMayaBatch"] = self.use_maya_batch.isChecked()
+
         return settings
 
     def _apply_settings(self):
@@ -293,6 +306,8 @@ class App(QtWidgets.QWidget):
 
         override_frames = settings.get("overrideExistingFrame", False)
         self.override_frames.setChecked(override_frames)
+
+        self.use_maya_batch.setChecked(settings.get("useMayaBatch", True))
 
         pools = [i for i in settings.get("pools", "").split(";") if i != ""]
         if not pools:
