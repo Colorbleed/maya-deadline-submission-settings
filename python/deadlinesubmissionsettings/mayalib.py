@@ -65,8 +65,8 @@ def apply_settings(instance, settings):
     """
 
     ignore = ["cbId", "id", "family", "machineList", "useLegacyRenderLayers"]
-    user_defined = cmds.listAttr(instance, userDefined=True)
-    attributes = [a for a in user_defined if a not in ignore]
+    attributes = [a for a in cmds.listAttr(instance, userDefined=True)
+                  if a not in ignore]
 
     for attr in attributes:
         attribute = "{}.{}".format(instance, attr)
@@ -75,8 +75,18 @@ def apply_settings(instance, settings):
         elif attr not in settings:
             log.error("Attribute '%s' missing in 'renderglobalDefault'! "
                       "Please re-create the instance" % attr)
+            continue
         else:
-            value = settings.get(attr, False)
+            value = settings[attr]
+
+        # Check if attribute is enum
+        attr_type = cmds.attributeQuery(attr, node=instance, attributeType=True)
+        if attr_type == "enum":
+            # Returns ["stuff:is:different"]
+            enums = cmds.attributeQuery(attr, node=instance, listEnum=True)
+            enum_list = enums[0].split(":")
+            idx = enum_list.index(value)
+            value = idx
 
         if isinstance(value, basestring):
             cmds.setAttr(attribute, value, type="string")
