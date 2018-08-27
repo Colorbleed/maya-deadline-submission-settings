@@ -21,7 +21,7 @@ class App(QtWidgets.QWidget):
         self.create_pools_options()
 
         # Apply any settings based off the renderglobalsDefault instance
-        self._apply_settings()
+        self._apply_instance_settings()
 
     def setup_ui(self):
         """Build the initial UI"""
@@ -136,7 +136,6 @@ class App(QtWidgets.QWidget):
         layout.addWidget(pools_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
-        #layout.addLayout(render_grp)
         layout.addWidget(accept_btn)
 
         # Enable access for all methods
@@ -206,7 +205,7 @@ class App(QtWidgets.QWidget):
         # Please read the documentation of Thinkbox Deadline on pools
         # https://deadline.thinkboxsoftware.com/demystifying-pools-groups-and-limits/
 
-        pools = [""]
+        pools = ["-"]
         pools.extend(lib.get_pool_list())
 
         for pool in pools[1:]:
@@ -239,7 +238,7 @@ class App(QtWidgets.QWidget):
             instance = mayalib.create_renderglobals_node()
 
         # Get UI settings as dict
-        job_info = self._get_settings()
+        job_info = self._get_ui_settings()
         mayalib.apply_settings(instance, job_info)
 
     def renderglobals_message(self):
@@ -255,7 +254,7 @@ class App(QtWidgets.QWidget):
                                        button)
         return
 
-    def _get_settings(self):
+    def _get_ui_settings(self):
 
         settings = {}
         machine_list_type = self._get_list_type()
@@ -279,15 +278,16 @@ class App(QtWidgets.QWidget):
 
         # Get pools
         primary_pool = self.primary_pool.currentText()
-        secondary_pool = self.secondary_pool.currentText()
-
+        secondary_pool = self.secondary_pool.currentText() or "-"
+        settings["primaryPool"] = primary_pool
+        settings["secondaryPool"] = secondary_pool
         settings["pools"] = ";".join([primary_pool, secondary_pool])
 
         settings["useMayaBatch"] = self.use_maya_batch.isChecked()
 
         return settings
 
-    def _apply_settings(self):
+    def _apply_instance_settings(self):
 
         instance = mayalib.find_render_instance()
         if not instance:
@@ -309,19 +309,27 @@ class App(QtWidgets.QWidget):
 
         self.use_maya_batch.setChecked(settings.get("useMayaBatch", True))
 
-        pools = [i for i in settings.get("pools", "").split(";") if i != ""]
-        if not pools:
-            pools = ["none", ""]  # default
-        elif len(pools) == 1:
-            pools.append("")
-
-        primary_pool, secondary_pool = pools
+        if "primaryPool" in settings:
+            primary_pool = settings.get("primaryPool")
+            secondary_pool = settings.get("secondaryPool")
+        else:
+            # Backwards compatibility
+            pools = [i for i in settings.get("pools", "").split(";") if i != ""]
+            if not pools:
+                pools = ["none", ""]
+            elif len(pools) == 1:
+                pools.append("")
+            primary_pool, secondary_pool = pools
 
         for idx in range(self.primary_pool.count()):
             text = self.primary_pool.itemText(idx)
             if text == primary_pool:
                 self.primary_pool.setCurrentIndex(idx)
                 break
+
+        # Ensure it translates back to empty entry
+        if secondary_pool == "-":
+            secondary_pool = ""
 
         for idx in range(self.secondary_pool.count()):
             text = self.secondary_pool.itemText(idx)
