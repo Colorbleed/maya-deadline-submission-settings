@@ -13,7 +13,7 @@ class App(QtWidgets.QWidget):
         self.setObjectName("deadlineSubmissionSettings")
         self.setWindowTitle("Deadline Submission setting")
         self.setWindowFlags(QtCore.Qt.Window)
-        self.setFixedSize(250, 500)
+        self.setFixedSize(250, 600)
 
         self.setup_ui()
         self.connections()
@@ -58,6 +58,22 @@ class App(QtWidgets.QWidget):
         priority_hlayout.addWidget(priority_slider)
         priority_grp.setLayout(priority_hlayout)
         # endregion Priority
+
+        # region ChunkSize
+        chunksize_grp = QtWidgets.QGroupBox("Frames Per Task")
+        chunksize_hlayout = QtWidgets.QHBoxLayout()
+
+        chunksize_value = QtWidgets.QSpinBox()
+        chunksize_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        chunksize_value.setEnabled(False)
+        chunksize_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        chunksize_slider.setMinimum(0)
+        chunksize_slider.setMaximum(99)
+
+        chunksize_hlayout.addWidget(chunksize_value)
+        chunksize_hlayout.addWidget(chunksize_slider)
+        chunksize_grp.setLayout(chunksize_hlayout)
+        # endregion
 
         # region pools
         pools_grp = QtWidgets.QGroupBox("Pools")
@@ -133,6 +149,7 @@ class App(QtWidgets.QWidget):
         layout.addWidget(override_frames)
         layout.addWidget(maya_batch_checkbox)
         layout.addWidget(priority_grp)
+        layout.addWidget(chunksize_grp)
         layout.addWidget(pools_grp)
         layout.addWidget(list_type_grp)
         layout.addLayout(machines_hlayout)
@@ -146,6 +163,10 @@ class App(QtWidgets.QWidget):
 
         self.priority_value = priority_value
         self.priority_slider = priority_slider
+
+        self.chunksize_value = chunksize_value
+        self.chunksize_slider = chunksize_slider
+
         self.primary_pool = primary_pool
         self.secondary_pool = secondary_pool
 
@@ -163,8 +184,13 @@ class App(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def connections(self):
+
         self.priority_slider.valueChanged[int].connect(
             self.priority_value.setValue)
+
+        self.chunksize_slider.valueChanged[int].connect(
+            self.chunksize_value.setValue)
+
         self.add_machine_btn.clicked.connect(self.add_selected_machines)
         self.remove_machine_btn.clicked.connect(self.remove_selected_machines)
         self.accept.clicked.connect(self.parse_settings)
@@ -263,6 +289,7 @@ class App(QtWidgets.QWidget):
         machine_limits = ",".join(machine_limits)
 
         settings["priority"] = self.priority_value.value()
+        settings["framesPerTask"] = self.chunksize_value.value()
         settings["includeDefaultRenderLayer"] = self.defaultlayer.isChecked()
         settings["suspendPublishJob"] = self.publish.isChecked()
 
@@ -302,6 +329,7 @@ class App(QtWidgets.QWidget):
         self.defaultlayer.setChecked(include_def_layer)
 
         self.priority_slider.setValue(settings.get("priority", 50))
+        self.chunksize_slider.setValue(settings.get("framesPerTask", 1))
         self.extend_frames.setChecked(settings.get("extendFrames", False))
 
         override_frames = settings.get("overrideExistingFrame", False)
