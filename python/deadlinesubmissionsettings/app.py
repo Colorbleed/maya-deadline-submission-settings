@@ -67,7 +67,7 @@ class App(QtWidgets.QWidget):
         chunksize_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         chunksize_value.setEnabled(False)
         chunksize_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        chunksize_slider.setMinimum(0)
+        chunksize_slider.setMinimum(1)
         chunksize_slider.setMaximum(99)
 
         chunksize_hlayout.addWidget(chunksize_value)
