@@ -41,12 +41,12 @@ def find_render_instance():
 
     instance = "renderglobalsDefault"
     if not cmds.objExists(instance):
-        log.error("No node found callen '{}'".format(instance))
+        log.error("No node found called '{}'".format(instance))
         return
 
     instances = cmds.ls("*:{}".format(instance))
     if len(instances) > 1:
-        raise RuntimeError("Found multiple rendergloablDefault instances, "
+        raise RuntimeError("Found multiple renderglobalDefault instances, "
                            "there can only be one")
 
     # Ensure attributes are
